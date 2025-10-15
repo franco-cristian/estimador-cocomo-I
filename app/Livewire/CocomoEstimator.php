@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\Estimation;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
@@ -10,6 +12,14 @@ use Livewire\Attributes\Rule;
 class CocomoEstimator extends Component
 {
     // Datos de entrada principales del formulario
+
+    #[Rule('required|string|min:3', message: 'El nombre del proyecto es requerido.')]
+    public string $projectName = '';
+
+    public Collection $savedEstimations;
+
+    public string $activeTab = 'calculator';
+
     #[Rule('required|numeric|min:1', message: 'El KLOC debe ser un número mayor a 0.')]
     public float $kloc = 50;
 
@@ -26,6 +36,7 @@ class CocomoEstimator extends Component
     public array $costDrivers = [];
     public array $projectModes = [];
     public array $driverGroups = [];
+    public array $modeTranslations = [];
     public ?array $resultados = null;
 
     public function mount(): void
@@ -37,9 +48,30 @@ class CocomoEstimator extends Component
         $this->driverGroups = [
             'Atributos del Producto' => ['RELY', 'DATA', 'CPLX'],
             'Atributos del Hardware' => ['TIME', 'STOR', 'VIRT', 'TURN'],
-            'Atributos del Personal' => ['ACAP', 'AEXP', 'PCAP', 'VEXP', 'LEXP'],
+            'Atributos del Personal' => ['ACAP', 'AEXP', 'PCAP', 'VEXP', 'LTEX'],
             'Atributos del Proyecto' => ['MODP', 'TOOL', 'SCED'],
         ];
+        $this->modeTranslations = [
+            'organic' => 'Orgánico',
+            'semi-detached' => 'Semi-acoplado',
+            'embedded' => 'Empotrado',
+        ];
+        $this->loadSavedEstimations();
+    }
+
+    public function showCalculator(): void
+    {
+        $this->activeTab = 'calculator';
+    }
+
+    public function showEstimations(): void
+    {
+        $this->activeTab = 'estimations';
+    }
+
+    public function loadSavedEstimations(): void
+    {
+        $this->savedEstimations = Estimation::latest()->get();
     }
 
     public function resetFactores(): void
@@ -105,6 +137,38 @@ class CocomoEstimator extends Component
             'costoTotal' => $costoTotal,
             'eaf' => $eaf,
         ];
+    }
+
+    public function save(): void
+    {
+        $this->validate();
+
+        if (is_null($this->resultados)) {
+            return;
+        }
+
+        Estimation::create([
+            'project_name' => $this->projectName,
+            'kloc' => $this->kloc,
+            'salario_mensual' => $this->salario,
+            'modo' => $this->modo,
+            'factores_costo' => $this->factores,
+            'eaf' => $this->resultados['eaf'],
+            'pm' => $this->resultados['pm'],
+            'duracion' => $this->resultados['duracion'],
+            'personal' => $this->resultados['personal'],
+            'costo_total' => $this->resultados['costoTotal'],
+        ]);
+
+        $this->loadSavedEstimations();
+        $this->projectName = '';
+        $this->activeTab = 'estimations';
+    }
+
+    public function delete(Estimation $estimation): void
+    {
+        $estimation->delete();
+        $this->loadSavedEstimations();
     }
     
     public function render()
