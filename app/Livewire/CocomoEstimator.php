@@ -11,27 +11,23 @@ class CocomoEstimator extends Component
 {
     // Datos de entrada principales del formulario
     #[Rule('required|numeric|min:1', message: 'El KLOC debe ser un número mayor a 0.')]
-    public float $kloc = 1000;
+    public float $kloc = 50;
 
     #[Rule('required|numeric|min:1', message: 'El salario debe ser un número mayor a 0.')]
-    public float $salario = 500000;
+    public float $salario = 3000;
 
     #[Rule('required|in:organic,semi-detached,embedded', message: 'El modo seleccionado no es válido.')]
     public string $modo = 'organic';
 
-    public array $factores = [];
+    public bool $useTwoDecimalRounding = false;
 
+    // Array para almacenar los 15 factores de costo
+    public array $factores = [];
     public array $costDrivers = [];
     public array $projectModes = [];
-
     public array $driverGroups = [];
-
     public ?array $resultados = null;
 
-    /**
-     * El método mount se ejecuta una sola vez cuando el componente se inicializa.
-     * Cargar la configuración y establecer los valores por defecto.
-     */
     public function mount(): void
     {
         $this->costDrivers = config('cocomo.drivers');
@@ -58,14 +54,17 @@ class CocomoEstimator extends Component
         $this->reset();
         $this->mount();
     }
-
+    
     /**
-     * "Computed Property". El resultado se cachea y solo se
-     * recalcula si una de sus dependencias cambia.
+     * Trunca un número a un número específico de decimales sin redondear.
+     * @param float $number El número a truncar.
+     * @param int $decimals El número de decimales a mantener.
+     * @return float El número truncado.
      */
-    public function getEafProperty(): float
+    private function truncate(float $number, int $decimals): float
     {
-        return array_reduce($this->factores, fn($carry, $factor) => $carry * $factor, 1);
+        $power = pow(10, $decimals);
+        return floor($number * $power) / $power;
     }
 
     public function calculate(): void
@@ -73,18 +72,32 @@ class CocomoEstimator extends Component
         $this->validate();
 
         $constants = $this->projectModes[$this->modo];
-        // 1. Calcular PM_base (Esfuerzo Base)
+        $eaf = array_reduce($this->factores, fn($carry, $factor) => $carry * $factor, 1);
         $pmBase = $constants['a'] * pow($this->kloc, $constants['b']);
-        // 2. EAF ya está calculado a través de la computed property 'eaf'
-        $eaf = $this->eaf;
-        // 3. Calcular PM Ajustado (Esfuerzo Ajustado)
-        $pm = $pmBase * $eaf;
-        // 4. Calcular Duración, Personal Promedio y Costo Total
-        $duracion = $constants['c'] * pow($pm, $constants['d']);
-        $personal = $duracion > 0 ? $pm / $duracion : 0;
-        $costoTotal = $personal * $this->salario;
 
-        // Almacenamos los resultados para mostrarlos en la vista
+        if ($this->useTwoDecimalRounding) {
+
+            $eaf = $this->truncate($eaf, 2);
+            
+            $pm = $pmBase * $eaf;
+            $pm = $this->truncate($pm, 2);
+
+            $duracion = $constants['c'] * pow($pm, $constants['d']);
+            $duracion = $this->truncate($duracion, 2);
+
+            $personal = $duracion > 0 ? $pm / $duracion : 0;
+            $personal = $this->truncate($personal, 2);
+
+            $costoTotal = $personal * $this->salario;
+
+        } else {
+            // CÁLCULO DE ALTA PRECISIÓN (MÉTODO POR DEFECTO)
+            $pm = $pmBase * $eaf;
+            $duracion = $constants['c'] * pow($pm, $constants['d']);
+            $personal = $duracion > 0 ? $pm / $duracion : 0;
+            $costoTotal = $personal * $this->salario;
+        }
+
         $this->resultados = [
             'pm' => $pm,
             'duracion' => $duracion,
