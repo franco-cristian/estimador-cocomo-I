@@ -57,7 +57,7 @@ return [
         ],
         'VIRT' => [
             'name' => 'Volatilidad de la máquina virtual',
-            'ratings' => [ 'VL' => null, 'L' => 0.87, 'N' => 1.00, 'H' => 1.15, 'VH' => 1.30, 'XH' => null ],
+            'ratings' => [ 'VL' => 0.87, 'L' => 0.94, 'N' => 1.00, 'H' => 1.10, 'VH' => 1.15, 'XH' => null ],
         ],
         'TURN' => [
             'name' => 'Tiempo de respuesta del ordenador',
@@ -78,12 +78,12 @@ return [
             'ratings' => [ 'VL' => 1.42, 'L' => 1.17, 'N' => 1.00, 'H' => 0.86, 'VH' => 0.70, 'XH' => null ],
         ],
         'VEXP' => [
-            'name' => 'Experiencia en la máquina virtual',
-            'ratings' => [ 'VL' => 1.21, 'L' => 1.10, 'N' => 1.00, 'H' => 0.90, 'VH' => null, 'XH' => null ],
+            'name' => 'Experiencia plataforma / entorno', 
+            'ratings' => [ 'VL' => 1.19, 'L' => 1.10, 'N' => 1.00, 'H' => 0.90, 'VH' => 0.85, 'XH' => null ]
         ],
-        'LEXP' => [
-            'name' => 'Experiencia en el lenguaje de programación',
-            'ratings' => [ 'VL' => 1.14, 'L' => 1.07, 'N' => 1.00, 'H' => 0.95, 'VH' => null, 'XH' => null ],
+        'LTEX' => [
+            'name' => 'Experiencia en lenguaje / herramientas', 
+            'ratings' => [ 'VL' => 1.14, 'L' => 1.07, 'N' => 1.00, 'H' => 0.95, 'VH' => 0.84, 'XH' => null ]
         ],
 
         // Atributos del Proyecto

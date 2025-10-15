@@ -48,7 +48,7 @@ class CocomoEstimator extends Component
         $this->driverGroups = [
             'Atributos del Producto' => ['RELY', 'DATA', 'CPLX'],
             'Atributos del Hardware' => ['TIME', 'STOR', 'VIRT', 'TURN'],
-            'Atributos del Personal' => ['ACAP', 'AEXP', 'PCAP', 'VEXP', 'LEXP'],
+            'Atributos del Personal' => ['ACAP', 'AEXP', 'PCAP', 'VEXP', 'LTEX'],
             'Atributos del Proyecto' => ['MODP', 'TOOL', 'SCED'],
         ];
         $this->modeTranslations = [
